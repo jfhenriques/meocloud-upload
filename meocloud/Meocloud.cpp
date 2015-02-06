@@ -18,6 +18,7 @@ namespace Meocloud {
 		this->url = NULL;
 	}
 
+
 	void HttpParameters::Add(char * key, char* param)
 	{
 		if( key != NULL )
@@ -43,7 +44,7 @@ namespace Meocloud {
 		vector<char*> outV, escList;
 		bool isFirst = true;
 		char *tmp, *outStr = NULL;
-		size_t size = 1;
+		size_t size = 1; // 1 extra byte for null-terminated string
 		char *curPtr;
 		size_t tBytes;
 
@@ -58,8 +59,14 @@ namespace Meocloud {
 
 		for (map<char *, char*>::iterator it = this->params.begin(); it != this->params.end(); it++)
 		{
-			if( it->first == NULL )
-				continue;
+			if( it->first == NULL ) continue;
+
+			// Key
+
+			tmp = curl_easy_escape(this->ctx->curl, it->first, 0);
+			if( tmp == NULL ) continue;
+
+			escList.push_back( tmp );
 
 			if( isFirst )
 				isFirst = false;
@@ -69,24 +76,25 @@ namespace Meocloud {
 				outV.push_back("&");
 				size += 1;
 			}
+			
 
-			outV.push_back( it->first );
-			size += strlen( it->first );
+			outV.push_back( tmp );
+			size += strlen( tmp );
 
-			if( it->second == NULL )
-				continue;
+
+			// value
+
+			if( it->second == NULL ) continue;
 
 			tmp = curl_easy_escape(this->ctx->curl, it->second, 0);
+			if( tmp == NULL ) continue;
 
-			if( tmp != NULL )
-			{
-				escList.push_back( tmp );
+			escList.push_back( tmp );
 
-				outV.push_back("=");
-				outV.push_back( tmp );
+			outV.push_back("=");
+			outV.push_back( tmp );
 
-				size += 1 + strlen( tmp );
-			}
+			size += 1 + strlen( tmp );
 		}
 
 		outStr = new char[size];
@@ -121,12 +129,18 @@ namespace Meocloud {
 
 	/***************************************************************************************/
 
-	Http::Http()
+	//Http::Http()
+	//{
+	//}
+
+	void Http::Init(void)
 	{
 		curl_global_init(CURL_GLOBAL_ALL);
-
 	}
-
+	void Http::Terminate(void)
+	{
+		curl_global_cleanup();
+	}
 
 	static HttpResult* getHttpResult()
 	{
@@ -224,7 +238,7 @@ namespace Meocloud {
 		/* we pass our 'chunk' struct to the callback function */ 
 		curl_easy_setopt(ctx->curl, CURLOPT_WRITEDATA, (void *)ctx);
 
-
+		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(ctx->curl, CURLOPT_USERAGENT, "meocloud-uploader/1.0");
 
 		if( params == NULL )

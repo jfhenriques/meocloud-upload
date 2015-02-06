@@ -8,6 +8,8 @@ using namespace Meocloud;
 
 int main(void)
 {
+	Http::Init();
+
 	//CURL *curl;
 	//CURLcode res;
 	//struct curl_slist *headerlist=NULL;
@@ -38,9 +40,11 @@ int main(void)
 
 		Http http;
 		HttpParameters params;
+
 		params.Add("var1","aaaa");
 		params.Add("var2","cont*=a3s$?&");
-		params.Add("var3","bbbb");
+		params.Add("va r3","bbbb");
+
 		HttpResult * result = http.Request("http://127.0.0.1", &params);
 
 		http.releaseResult(result);
@@ -49,6 +53,8 @@ int main(void)
 	} catch(exception& e) {
 		cout << e.what() << endl;
 	}
+
+	Http::Terminate();
 
 	return 0;
 }

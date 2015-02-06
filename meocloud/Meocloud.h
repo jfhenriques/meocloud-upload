@@ -57,12 +57,15 @@ namespace Meocloud {
 		
 
 	public:
-		Http();
+		Http() {};
 		~Http() {};
 		//~Http(void);
 
 		void releaseResult(HttpResult* result);
 		HttpResult* Request(const char* url, HttpParameters *params = NULL);
+
+		static void Init(void);
+		static void Terminate(void);
 
 	};
 
