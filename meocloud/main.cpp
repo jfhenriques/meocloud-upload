@@ -37,7 +37,11 @@ int main(void)
 	try {
 
 		Http http;
-		HttpResult * result = http.Request("http://127.0.0.1");
+		HttpParameters params;
+		params.Add("var1","aaaa");
+		params.Add("var2","cont*=a3s$?&");
+		params.Add("var3","bbbb");
+		HttpResult * result = http.Request("http://127.0.0.1", &params);
 
 		http.releaseResult(result);
 
