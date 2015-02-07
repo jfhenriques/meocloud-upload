@@ -36,6 +36,7 @@ namespace Http {
 
 
 
+
 	class HttpParameters {
 	private:
 		std::map<const char*, const char *> *params;
@@ -54,8 +55,10 @@ namespace Http {
 		
 	};
 
-
 	typedef HttpParameters HttpURL;
+
+
+
 
 	class HttpBody {
 	public:
@@ -90,10 +93,13 @@ namespace Http {
 		size_t ReadCallback(void *ptr, size_t size, size_t nmemb);
 	};
 
+
+
+
+
 	class Http {
 
 	private:
-		
 
 	public:
 		Http() {};
@@ -112,6 +118,7 @@ namespace Http {
 		static void Terminate(void);
 
 	};
+
 
 }
 

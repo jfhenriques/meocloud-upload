@@ -11,7 +11,12 @@ using namespace std;
 namespace Http {
 
 
-	/***************************************************************************************/
+
+	/********************************************************************************************
+	 *
+	 *	HttpParameters
+	 *
+	 ********************************************************************************************/
 	
 	HttpParameters::HttpParameters(const char* url)
 	{
@@ -79,6 +84,8 @@ namespace Http {
 
 		}
 
+		// build it
+
 		for (map<const char *, const char*>::iterator it = this->params->begin(); it != this->params->end(); it++)
 		{
 			if( it->first == NULL ) continue;
@@ -121,6 +128,7 @@ namespace Http {
 
 		outStr = new char[size];
 
+		// concatenate everything
 		if( outStr != NULL )
 		{
 			curPtr = outStr;
@@ -133,9 +141,10 @@ namespace Http {
 				curPtr += tBytes;
 			}
 
-			*curPtr = 0;
+			*curPtr = 0; // null terminated the string
 		}
 
+		// cleanup
 		for (vector<char *>::iterator it = escList.begin(); it != escList.end(); it++)
 		{
 			curl_free(*it);
@@ -148,7 +157,11 @@ namespace Http {
 
 
 
-	/***************************************************************************************/
+	/********************************************************************************************
+	 *
+	 *	FileHttpBody
+	 *
+	 ********************************************************************************************/
 
 
 
@@ -202,17 +215,13 @@ namespace Http {
 
 
 
-	/***************************************************************************************/
 
-	void Http::Init(void)
-	{
-		curl_global_init(CURL_GLOBAL_ALL);
-	}
-	void Http::Terminate(void)
-	{
-		curl_global_cleanup();
-	}
 
+	/********************************************************************************************
+	 *
+	 *	Http
+	 *
+	 ********************************************************************************************/
 
 
 	static HttpResult* getHttpResult()
@@ -243,10 +252,6 @@ namespace Http {
 
 		return ctx;
 	}
-
-
-
- 
 	static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 	{
 		size_t realsize = size * nmemb;
@@ -266,11 +271,23 @@ namespace Http {
  
 		return realsize;
 	}
+	static size_t ReadCallback(void *ptr, size_t size, size_t nmemb, void *userp)
+	{
+		HttpBody *body = (HttpBody*)userp;
+
+		return body->ReadCallback(ptr, size, nmemb);
+	}
 
 
+	void Http::Init(void)
+	{
+		curl_global_init(CURL_GLOBAL_ALL);
+	}
 
-
-
+	void Http::Terminate(void)
+	{
+		curl_global_cleanup();
+	}
 
 	void Http::releaseResult(HttpResult* result)
 	{
@@ -309,14 +326,6 @@ namespace Http {
 		return this->Request(url, HttpMethod::M_DELETE, body);
 	}
 
-
-
-	static size_t ReadCallback(void *ptr, size_t size, size_t nmemb, void *userp)
-	{
-		HttpBody *body = (HttpBody*)userp;
-
-		return body->ReadCallback(ptr, size, nmemb);
-	}
 
 
 	HttpResult* Http::Request(HttpURL* url, HttpMethod method, HttpBody* body)
@@ -415,7 +424,10 @@ namespace Http {
 
 
 
-	/***************************************************************************************/
-
+	/********************************************************************************************
+	 *
+	 *	
+	 *
+	 ********************************************************************************************/
 
 }
