@@ -340,6 +340,31 @@ namespace Http {
 		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(ctx->curl, CURLOPT_USERAGENT, "meocloud-uploader/1.0");
 
+		//slist = curl_slist_append(slist, "Expect:"); 
+
+
+		if( body != NULL )
+		{
+			curl_easy_setopt(ctx->curl, CURLOPT_READFUNCTION, ReadCallback);
+			curl_easy_setopt(ctx->curl, CURLOPT_READDATA, body);
+
+			if( body->IsChunked() )
+				slist = curl_slist_append(slist, "Transfer-Encoding: chunked");
+			else
+				slist = curl_slist_append(slist, "Transfer-Encoding:");
+				
+
+			if( body->HasSize() )
+			{
+				stringstream ss;
+				ss << "Content-Length: " << body->Size();
+				contentLength = ss.str();
+				slist = curl_slist_append(slist, contentLength.c_str());
+
+				curl_easy_setopt(ctx->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)body->Size());
+			}
+		}
+
 		switch(method)
 		{
 		case HttpMethod::M_POST:
@@ -358,29 +383,6 @@ namespace Http {
 			break;
 		}
 
-		slist = curl_slist_append(slist, "Expect:"); 
-
-		if( body != NULL )
-		{
-			if( body->IsChunked() )
-				slist = curl_slist_append(slist, "Transfer-Encoding: chunked");
-			else
-				slist = curl_slist_append(slist, "Transfer-Encoding:");
-				
-
-			if( body->HasSize() )
-			{
-				stringstream ss;
-				ss << "Content-Length: " << body->Size();
-				contentLength = ss.str();
-				slist = curl_slist_append(slist, contentLength.c_str());
-			}
-
-			curl_easy_setopt(ctx->curl, CURLOPT_POSTFIELDSIZE_LARGE, 0);
-
-			curl_easy_setopt(ctx->curl, CURLOPT_READFUNCTION, ReadCallback);
-			curl_easy_setopt(ctx->curl, CURLOPT_READDATA, body);
-		}
 
 		url->SetCTX(ctx);
 		result->url = url->toStr();
@@ -407,12 +409,6 @@ namespace Http {
 		/* Check for errors */ 
 		if(result->curlStatus != CURLE_OK)
 			result->curlErrorMsg = (char *)curl_easy_strerror(result->curlStatus);
-
-		else
-		{
-
-
-		}
 
 		return result;
 	}
