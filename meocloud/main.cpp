@@ -1,65 +1,31 @@
 
+#include "Http.h"
+#include "Meocloud_API.h"
 #include <iostream>
-#include "Meocloud.h"
 
 using namespace std;
+using namespace Http;
 using namespace Meocloud;
 
 
 int main(void)
 {
-	Http::Init();
-
-	//CURL *curl;
-	//CURLcode res;
-	//struct curl_slist *headerlist=NULL;
-	//const char buf[] = "Authorization: Bearer 123";
- //
-	//curl_global_init(CURL_GLOBAL_ALL);
-	//headerlist = curl_slist_append(headerlist, buf);
+	::Http::Http::Init();
 
 
-	//curl = curl_easy_init();
 
-	//if(curl) {
-	//	/* what URL that receives this POST */ 
-	//	curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1");
-	//	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
- //
-	//	/* Perform the request, res will get the return code */ 
-	//	res = curl_easy_perform(curl);
-	//	/* Check for errors */ 
-	//	if(res != CURLE_OK)
-	//	  fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
- //
-	//	/* always cleanup */ 
-	//	curl_easy_cleanup(curl);
-	//}
+	API meocloudAPI("", "");
+	meocloudAPI.SetAccessToken("");
 
-	try {
+	FILE *in = fopen("in.txt", "rb");
+	//FILE *in = fopen("img.jpg", "rb");
 
-		Http http;
-		HttpParameters params;
+	meocloudAPI.UploadFile(in, "txt.txt");
+	//meocloudAPI.UploadFile(, "bin.txt");
 
-		params.Add("var1","aaaa");
-		params.Add("var2","cont*=a3s$?&");
-		params.Add("va r3","bbbb");
+	fclose(in);
 
-		HttpResult * result = http.Request("http://127.0.0.1", &params);
-
-		http.releaseResult(result);
-
-	
-	} catch(exception& e) {
-		cout << e.what() << endl;
-	}
-
-	Http::Terminate();
+	::Http::Http::Terminate();
 
 	return 0;
 }
-
-
-
-
-
