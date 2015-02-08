@@ -20,18 +20,18 @@ namespace Http {
 
 	typedef struct CurlCTX
 	{
-		CURL *curl;
-		char *memory;
+		CURL* curl;
+		char* memory;
 		size_t size;
 	} CurlCTX;
 
 
 	typedef struct HttpResult {
-		char *url;
+		str url;
 		long statusCode;
 		CURLcode curlStatus;
-		char *curlErrorMsg;
-		CurlCTX *ctx;
+		str curlErrorMsg;
+		CurlCTX* ctx;
 	} HttpResult;
 
 
@@ -39,19 +39,20 @@ namespace Http {
 
 	class HttpParameters {
 	private:
-		std::map<const char*, const char *> *params;
-		char *url;
-		CurlCTX *ctx;
+		std::map<c_str, c_str> *params;
+		str url;
+		CurlCTX* ctx;
 
 	public:
-		HttpParameters(const char* url = NULL);
+		HttpParameters(c_str url = NULL);
 		~HttpParameters();
 
-		void Add(const char* key, const char* param);
-		void SetUrl(const char* url);
+		void Add(c_str key, c_str param);
+		void SetUrl(c_str url);
 		void SetCTX(CurlCTX *ctx);
 
-		char* toStr();
+		str toStr();
+		//void ReleaseStr(str str);
 		
 	};
 

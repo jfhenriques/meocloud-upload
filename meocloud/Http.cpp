@@ -18,7 +18,7 @@ namespace Http {
 	 *
 	 ********************************************************************************************/
 	
-	HttpParameters::HttpParameters(const char* url)
+	HttpParameters::HttpParameters(c_str url)
 	{
 		this->params = NULL;
 		this->url = NULL;
@@ -36,16 +36,16 @@ namespace Http {
 	}
 
 
-	void HttpParameters::Add(const char * key, const char* param)
+	void HttpParameters::Add(c_str key, c_str param)
 	{
 		if( this->params == NULL )
-			this->params = new std::map<const char *, const char *>();
+			this->params = new std::map<c_str, c_str>();
 
 		if( key != NULL )
 			(*this->params)[key] = param;
 	}
 
-	void HttpParameters::SetUrl(const char* url)
+	void HttpParameters::SetUrl(c_str url)
 	{
 		if( this->url != NULL )
 			delete[] this->url;
@@ -58,7 +58,7 @@ namespace Http {
 			this->ctx = ctx;
 	}
 
-	char* HttpParameters::toStr()
+	str HttpParameters::toStr()
 	{
 		if( this->params->size() <= 0 )
 		{
@@ -68,12 +68,29 @@ namespace Http {
 			return StrCopy(this->url);
 		}
 
-		vector<char*> outV, escList;
+		bool hadCurl;
+		CURL* curlPtr = NULL;
+
+		vector<str> outV, escList;
 		bool isFirst = true;
-		char *tmp, *outStr = NULL;
+		str tmp, outStr = NULL;
 		size_t size = 1; // 1 extra byte for null-terminated string
-		char *curPtr;
+		str curPtr;
 		size_t tBytes;
+
+		if( this->ctx != NULL && this->ctx->curl != NULL )
+		{
+			hadCurl = true;
+			curlPtr = this->ctx->curl;
+		}
+		else
+		{
+			hadCurl = false;
+			curlPtr = curl_easy_init();
+
+			if( !curlPtr )
+				throw MEOCLOUD_ERROR_HTTP;
+		}
 
 		if( this->url != NULL )
 		{
@@ -86,13 +103,13 @@ namespace Http {
 
 		// build it
 
-		for (map<const char *, const char*>::iterator it = this->params->begin(); it != this->params->end(); it++)
+		for (map<c_str, c_str>::iterator it = this->params->begin(); it != this->params->end(); it++)
 		{
 			if( it->first == NULL ) continue;
 
 			// Key
 
-			tmp = curl_easy_escape(this->ctx->curl, it->first, 0);
+			tmp = curl_easy_escape(curlPtr, it->first, 0);
 			if( tmp == NULL ) continue;
 
 			escList.push_back( tmp );
@@ -115,7 +132,7 @@ namespace Http {
 
 			if( it->second == NULL ) continue;
 
-			tmp = curl_easy_escape(this->ctx->curl, it->second, 0);
+			tmp = curl_easy_escape(curlPtr, it->second, 0);
 			if( tmp == NULL ) continue;
 
 			escList.push_back( tmp );
@@ -133,7 +150,7 @@ namespace Http {
 		{
 			curPtr = outStr;
 
-			for (vector<char *>::iterator it = outV.begin(); it != outV.end(); it++)
+			for (vector<str>::iterator it = outV.begin(); it != outV.end(); it++)
 			{
 				tBytes = strlen(*it);
 				memcpy(curPtr, *it, tBytes);
@@ -145,13 +162,22 @@ namespace Http {
 		}
 
 		// cleanup
-		for (vector<char *>::iterator it = escList.begin(); it != escList.end(); it++)
+		for (vector<str>::iterator it = escList.begin(); it != escList.end(); it++)
 		{
 			curl_free(*it);
 		}
 
+		if( !hadCurl )
+			curl_easy_cleanup(curlPtr);
+
 		return outStr;
 	}
+
+	//void HttpParameters::ReleaseStr(str str)
+	//{
+	//	if( str != NULL )
+	//		curl_free(str);
+	//}
 
 
 
@@ -206,7 +232,7 @@ namespace Http {
 			if( sizeRead > 0 || this->hasRead )
 				break;
 		}
-		char *ptrC = (char*)ptr;
+
 		this->hasRead = true;
 
 		return sizeRead;
@@ -258,9 +284,9 @@ namespace Http {
 		CurlCTX *ctx = (CurlCTX *)userp;
 
 		if( ctx->memory == NULL )
-			ctx->memory = (char *)malloc( ctx->size + realsize + 1);
+			ctx->memory = (str)malloc( ctx->size + realsize + 1);
 		else
-			ctx->memory = (char*)realloc(ctx->memory, ctx->size + realsize + 1);
+			ctx->memory = (str)realloc(ctx->memory, ctx->size + realsize + 1);
 
 		if(ctx->memory == NULL)
 			throw MEOCLOUD_EXCEPTION_HTTP;
@@ -417,7 +443,7 @@ namespace Http {
 
 		/* Check for errors */ 
 		if(result->curlStatus != CURLE_OK)
-			result->curlErrorMsg = (char *)curl_easy_strerror(result->curlStatus);
+			result->curlErrorMsg = (str)curl_easy_strerror(result->curlStatus);
 
 		return result;
 	}

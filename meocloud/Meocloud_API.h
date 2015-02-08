@@ -5,11 +5,9 @@
 
 #include "Http.h"
 #include <string>
+#include "rapidjson/document.h"
 
 using namespace std;
-
-typedef const char* c_str;
-typedef char* str;
 
 
 namespace Meocloud {
@@ -41,8 +39,8 @@ namespace Meocloud {
 		~API();
 
 
-		const char* GetConsumerKey();
-		const char* GetConsumerSecret();
+		c_str GetConsumerKey();
+		c_str GetConsumerSecret();
 
 		c_str GetRefreshToken();
 		void SetRefreshToken(c_str rToken);
@@ -51,7 +49,16 @@ namespace Meocloud {
 		void SetAccessToken(c_str aToken);
 
 
-		void UploadFile(FILE *stream, c_str name);
+		string GetAuthorizationURL();
+
+
+		bool UploadFile(FILE *stream, c_str name);
+
+		rapidjson::Document* RequestToken(c_str code, bool isRefresh = false);
+
+		void WriteFile(c_str file);
+
+		static API* FromFile(c_str file);
 
 	};
 

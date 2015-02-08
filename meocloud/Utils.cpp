@@ -7,7 +7,7 @@
 
 
 
-char* StrCopy(const char *in)
+str StrCopy(c_str in)
 {
 	if( in == NULL )
 		return NULL;
@@ -22,3 +22,4 @@ char* StrCopy(const char *in)
 	}
 	return tmp;
 }
+
