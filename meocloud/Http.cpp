@@ -226,8 +226,10 @@ namespace Http {
 
 		while(true)
 		{
-			if( (sizeRead = fread(ptr, size, nmemb, this->stream)) == EOF )
-				return 0;
+			if( feof(this->stream) )
+				break;
+
+			sizeRead = fread(ptr, size, nmemb, this->stream);
 
 			if( sizeRead > 0 || this->hasRead )
 				break;

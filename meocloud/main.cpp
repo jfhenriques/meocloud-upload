@@ -22,7 +22,6 @@ static Document *documentResponse = NULL;
 static str parse_argument(int argc, str argv[])
 {
 	bool isNotLast;
-	bool found = true;
 
 	for (int i = 1; i < argc; i++)
 	{
