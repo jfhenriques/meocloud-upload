@@ -431,7 +431,7 @@ namespace Http {
 
 		curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, slist);
 
-		curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
+		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 
 		/* Perform the request, res will get the return code */ 
 		result->curlStatus = curl_easy_perform(ctx->curl);

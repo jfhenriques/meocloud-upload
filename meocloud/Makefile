@@ -12,12 +12,12 @@ OBJECTS=$(SOURCES:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-        $(CC) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 $(SRCS:.c=.d):%.c
-        $(CC) $(CXXFLAGS)  $< >$@
+	$(CC) $(CXXFLAGS)  $< >$@
 
 .PHONY: clean
 
 clean:
-        rm -f *.o
+	rm -f *.o
