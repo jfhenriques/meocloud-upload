@@ -78,7 +78,12 @@ namespace Http {
 		bool IsChunked() { return false; }
 		bool HasSize() { return true; }
 		long Size() { return 0; }
-		size_t ReadCallback(void *ptr, size_t size, size_t nmemb) { return 0; }
+		size_t ReadCallback(void *ptr, size_t size, size_t nmemb) {
+			(void)ptr;
+			(void)size;
+			(void)nmemb;
+			return 0;
+		}
 	};
 
 	class FileHttpBody: virtual public HttpBody
