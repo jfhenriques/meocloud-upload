@@ -1,2 +1,5 @@
 all:
-	cd meocloud ; makei
+	cd meocloud ; make
+
+clean
+	cd meocloud ; make clean
