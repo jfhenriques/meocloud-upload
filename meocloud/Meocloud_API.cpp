@@ -2,10 +2,10 @@
 #include <cstdio>
 #include "Meocloud_API.h"
 #include <iostream>
-#include "rapidjson\document.h"
-#include "rapidjson\filewritestream.h"
-#include "rapidjson\filereadstream.h"
-#include "rapidjson\prettywriter.h"
+#include <rapidjson/document.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/prettywriter.h>
 
 using namespace std;
 using namespace Http;
@@ -36,18 +36,23 @@ namespace Meocloud {
 
 	API::API(c_str cKey, c_str cSecret)
 	{
+		this->consumer_key = NULL;
+		this->consumer_secret = NULL;
+		this->refresh_token = NULL;
+		this->access_token = NULL;
+
 		SetContent(&this->consumer_key, cKey);
 		SetContent(&this->consumer_secret, cSecret);
 	};
 
-	API::API(c_str cKey, c_str cSecret, c_str rToken, c_str aToken)
-	{
-		SetContent(&this->consumer_key, cKey);
-		SetContent(&this->consumer_secret, cSecret);
+	//API::API(c_str cKey, c_str cSecret, c_str rToken, c_str aToken)
+	//{
+	//	SetContent(&this->consumer_key, cKey);
+	//	SetContent(&this->consumer_secret, cSecret);
 
-		this->SetRefreshToken(rToken);
-		this->SetAccessToken(aToken);
-	};
+	//	this->SetRefreshToken(rToken);
+	//	this->SetAccessToken(aToken);
+	//};
 	API::~API()
 	{
 		SetContent(&this->consumer_key, NULL);

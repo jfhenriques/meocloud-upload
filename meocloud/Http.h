@@ -2,15 +2,18 @@
 #ifndef _HTTP_H_
 #define _HTTP_H_
 
-
-#include "Utils.h"
-#include "curl\curl.h"
-#include <map>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "Utils.h"
+#include <curl/curl.h>
+#include <map>
+
+
 
 namespace Http {
 
-	typedef enum HttpMethod
+	typedef enum
 	{
 		M_GET = 0,
 		M_POST,

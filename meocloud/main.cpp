@@ -236,7 +236,7 @@ int main(int argc, str argv[])
 		retCode = 2;
 
 		if( documentResponse != NULL )
-			free( documentResponse );
+			delete documentResponse;
 	}
 
 	::Http::Http::Terminate();

@@ -5,7 +5,7 @@
 
 #include "Http.h"
 #include <string>
-#include "rapidjson/document.h"
+#include <rapidjson/document.h>
 
 using namespace std;
 
@@ -35,7 +35,6 @@ namespace Meocloud {
 
 
 		API(c_str cKey, c_str cSecret);
-		API(c_str cKey, c_str cSecret, c_str rToken, c_str aToken);
 		~API();
 
 

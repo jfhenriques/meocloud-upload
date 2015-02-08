@@ -95,7 +95,7 @@ namespace Http {
 		if( this->url != NULL )
 		{
 			outV.push_back(this->url);
-			outV.push_back("?");
+			outV.push_back((str)"?");
 
 			size += strlen(this->url) + 1 ;
 
@@ -119,7 +119,7 @@ namespace Http {
 
 			else
 			{
-				outV.push_back("&");
+				outV.push_back((str)"&");
 				size += 1;
 			}
 			
@@ -137,7 +137,7 @@ namespace Http {
 
 			escList.push_back( tmp );
 
-			outV.push_back("=");
+			outV.push_back((str)"=");
 			outV.push_back( tmp );
 
 			size += 1 + strlen( tmp );
@@ -359,7 +359,7 @@ namespace Http {
 		CurlCTX *ctx = getContext();
 		HttpResult* result = getHttpResult();
 		curl_slist *slist = NULL;
-		string contentLength;
+		//string contentLength;
 
 		if( ctx == NULL || url == NULL || result == NULL )
 			throw MEOCLOUD_EXCEPTION_HTTP;
@@ -391,10 +391,10 @@ namespace Http {
 
 			if( body->HasSize() )
 			{
-				stringstream ss;
-				ss << "Content-Length: " << body->Size();
-				contentLength = ss.str();
-				slist = curl_slist_append(slist, contentLength.c_str());
+				//stringstream ss;
+				//ss << "Content-Length: " << body->Size();
+				//contentLength = ss.str();
+				//slist = curl_slist_append(slist, contentLength.c_str());
 
 				curl_easy_setopt(ctx->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)body->Size());
 			}
@@ -431,7 +431,7 @@ namespace Http {
 
 		curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, slist);
 
-		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
+		curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 
 		/* Perform the request, res will get the return code */ 
 		result->curlStatus = curl_easy_perform(ctx->curl);
