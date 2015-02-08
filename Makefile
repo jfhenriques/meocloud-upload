@@ -1,5 +1,5 @@
 all:
 	cd meocloud ; make
 
-clean
+clean:
 	cd meocloud ; make clean
