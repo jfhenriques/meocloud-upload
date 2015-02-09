@@ -157,15 +157,14 @@ int main(int argc, str argv[])
 			API meocloudAPI(consumer_key.c_str(), consumer_secret.c_str());
 
 
-			cout << "Insira no browser o seguinte link:" << endl << endl;
+			cout << endl << "Insira o seguinte link no browser e autorize a aplicacao:" << endl << endl;
 
 			cout << meocloudAPI.GetAuthorizationURL() << endl << endl;
 
-			cout << "Apos concluir a autorizacao sera reencaminhado" << endl;
-			cout << "para uma pagina 'http://127.0.0.1/callback?code=CODIGO'" << endl << endl;
-			cout << "Copie o codigo de autorizacao 'CODIGO', e insira-o e de seguida. " << endl;
+			cout << "Apos concluir sera apresentado um PIN" << endl;
+			cout << "Copie este PIN e introduza-o de seguida: " << endl << endl;
 
-			cout << "Codigo de Autorizacao: ";
+			cout << "PIN: ";
 
 			cin >> code;
 			
@@ -180,7 +179,7 @@ int main(int argc, str argv[])
 
 			if( statusCode != 200 )
 			{
-				error_stream << "Autorizacao de acesso. Verifique os dados inseridos e tente novamente.";
+				error_stream << "Probema ao autorizar. Verifique os dados inseridos e tente novamente.";
 				throw 1;
 			}
 
@@ -191,7 +190,7 @@ int main(int argc, str argv[])
 
 			if( tokens.expires > 0 )
 			{
-				cout << "Token recebido expira dentro de " << tokens.expires << " segundos" << endl;
+				cout << endl << "Token recebido expira dentro de " << tokens.expires << " segundos" << endl;
 
 			}
 			
@@ -200,7 +199,7 @@ int main(int argc, str argv[])
 
 			meocloudAPI.WriteFile(confFile);
 
-			cout << "Aplicacao configurada com sucesso" << endl;
+			cout << endl << "Aplicacao configurada com sucesso" << endl;
 		}
 
 
