@@ -191,11 +191,12 @@ namespace Http {
 
 
 
-	FileHttpBody::FileHttpBody(FILE *stream, bool hasSize)
+	FileHttpBody::FileHttpBody(FILE *stream, bool chunked, bool hasSize)
 	{
 		this->hasSize = hasSize;
 		this->stream = stream;
 		this->size = 0L;
+		this->chunked = chunked;
 
 		if( hasSize )
 		{
@@ -212,7 +213,7 @@ namespace Http {
 
 	bool FileHttpBody::IsChunked()
 	{
-		return false;
+		return this->chunked;
 	}
 
 	long FileHttpBody::Size()
@@ -243,6 +244,106 @@ namespace Http {
 
 
 
+	/********************************************************************************************
+	 *
+	 *	URLEncodedHttpBody
+	 *
+	 ********************************************************************************************/
+
+
+	//class URLEncodedHttpBody: virtual public HttpBody
+	//{
+	//private:
+	//	long size;
+	//	c_str data;
+	//	size_t readPtr;
+	//	HttpParameters params;
+	//public:
+	//	URLEncodedHttpBody();
+
+	//	void AddParam(c_str key, c_str value);
+	//	void Build(CURL* cInstance = NULL, curl_slist *Hlist = NULL);
+
+	//	bool IsChunked();
+	//	bool HasSize();
+	//	long Size();
+	//	size_t ReadCallback(void *ptr, size_t size, size_t nmemb);
+	//};
+
+	URLEncodedHttpBody::URLEncodedHttpBody()
+	{
+		this->data = NULL;
+		this->size = 0;
+		this->readPtr = 0;
+	}
+	URLEncodedHttpBody::~URLEncodedHttpBody()
+	{
+		if( this->data != NULL )
+			delete[] this->data;
+	}
+
+
+	void URLEncodedHttpBody::AddParam(c_str key, c_str value)
+	{
+		params.Add(key, value);
+	}
+
+	void URLEncodedHttpBody::Prepare(CurlCTX *ctx)
+	{
+		if( this->data != NULL )
+		{
+			delete[] this->data;
+
+			this->data = NULL;
+			this->size = 0;
+			this->readPtr = 0;
+		}
+
+		this->params.SetCTX(ctx);
+		this->data = this->params.toStr();
+
+		if( this->data != NULL )
+		{
+			this->size = strlen( this->data );
+
+			if( ctx != NULL )
+				ctx->headers = curl_slist_append(ctx->headers, "Content-Type: application/x-www-form-urlencoded");
+		}
+
+	}
+
+	bool URLEncodedHttpBody::IsChunked()
+	{
+		return false;
+	}
+
+	bool URLEncodedHttpBody::HasSize()
+	{
+		return true;
+	}
+
+	long URLEncodedHttpBody::Size()
+	{
+		return this->size;
+	}
+
+
+	size_t URLEncodedHttpBody::ReadCallback(void *ptr, size_t size, size_t nmemb)
+	{
+		if( this->data == NULL )
+			return 0;
+
+		size_t sizeRead = min((size_t)(this->size - this->readPtr), (size_t)(this->size * nmemb) );
+		//size_t sizeRead = min((size_t)(min(this->size - this->readPtr, 10)), (size_t)(this->size * nmemb) );
+
+		if( sizeRead > 0 )
+		{
+			memcpy(ptr, this->data + this->readPtr, sizeRead);
+			this->readPtr += sizeRead;
+		}
+
+		return sizeRead;
+	}
 
 
 	/********************************************************************************************
@@ -326,7 +427,11 @@ namespace Http {
 
 			if( result->ctx != NULL )
 			{
+				if( result->ctx->headers != NULL )
+					curl_slist_free_all( result->ctx->headers);
+
 				curl_easy_cleanup(result->ctx->curl);
+
 				if(result->ctx->memory != NULL)
 					free(result->ctx->memory);
 
@@ -360,8 +465,8 @@ namespace Http {
 	{
 		CurlCTX *ctx = getContext();
 		HttpResult* result = getHttpResult();
-		curl_slist *slist = NULL;
-		//string contentLength;
+		//curl_slist *slist = NULL;
+		string contentLength;
 
 		if( ctx == NULL || url == NULL || result == NULL )
 			throw MEOCLOUD_EXCEPTION_HTTP;
@@ -377,26 +482,31 @@ namespace Http {
 		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(ctx->curl, CURLOPT_USERAGENT, "meocloud-uploader/1.0");
 
-		//slist = curl_slist_append(slist, "Expect:"); 
+		//ctx->headers = curl_slist_append(ctx->headers, "Expect:"); 
 
 
 		if( body != NULL )
 		{
+			body->Prepare(ctx);
+
 			curl_easy_setopt(ctx->curl, CURLOPT_READFUNCTION, ReadCallback);
 			curl_easy_setopt(ctx->curl, CURLOPT_READDATA, body);
 
 			if( body->IsChunked() )
-				slist = curl_slist_append(slist, "Transfer-Encoding: chunked");
+				ctx->headers = curl_slist_append(ctx->headers, "Transfer-Encoding: chunked");
 			else
-				slist = curl_slist_append(slist, "Transfer-Encoding:");
+				ctx->headers = curl_slist_append(ctx->headers, "Transfer-Encoding:");
 				
 
 			if( body->HasSize() )
 			{
-				//stringstream ss;
-				//ss << "Content-Length: " << body->Size();
-				//contentLength = ss.str();
-				//slist = curl_slist_append(slist, contentLength.c_str());
+				if( method != HttpMethod::M_PUT || body->Size() == 0 )
+				{
+					stringstream ss;
+					ss << "Content-Length: " << body->Size();
+					contentLength = ss.str();
+					ctx->headers = curl_slist_append(ctx->headers, contentLength.c_str());
+				}
 
 				curl_easy_setopt(ctx->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)body->Size());
 			}
@@ -428,18 +538,13 @@ namespace Http {
 		curl_easy_setopt(ctx->curl, CURLOPT_URL, result->url);
 
 		// set headers
-		if( slist != NULL )
-			curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, slist);
-
-		curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, slist);
+		if( ctx->headers != NULL )
+			curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, ctx->headers);
 
 		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 
 		/* Perform the request, res will get the return code */ 
 		result->curlStatus = curl_easy_perform(ctx->curl);
-
-		if( slist != NULL )
-			curl_slist_free_all(slist);
 
 		curl_easy_getinfo(ctx->curl, CURLINFO_RESPONSE_CODE, &result->statusCode);
 

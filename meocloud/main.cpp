@@ -11,11 +11,12 @@ using namespace Meocloud;
 using namespace rapidjson;
 
 
-
 static c_str filename = NULL;
 static c_str storename = NULL;
 static c_str confFile = "meocloud.conf";
 static bool initMode = false;
+static bool createDirectories = false;
+static bool overwriteFiles = false;
 
 static Document *documentResponse = NULL;
 
@@ -29,6 +30,16 @@ static str parse_argument(int argc, str argv[])
 
 		if ( strcmp(argv[i], "--init") == 0 )
 			initMode = true;
+
+		else
+		if (   strcmp(argv[i], "-y") == 0
+			|| strcmp(argv[i], "--overwrite") == 0 )
+			overwriteFiles = true;
+
+		else
+		if (   strcmp(argv[i], "-d") == 0
+			|| strcmp(argv[i], "--createdirs") == 0 )
+			createDirectories = true;
 
 		else
 		if( isNotLast )
@@ -92,7 +103,9 @@ int main(int argc, str argv[])
 			string refresh_token;
 			string access_token;
 
-			char cont;
+			string cont;
+			string sandbox;
+			bool isSandbox = false;
 
 			cout << "Consumer key: ";
 			cin >> consumer_key;
@@ -100,15 +113,22 @@ int main(int argc, str argv[])
 			cout << "Consumer secret: ";
 			cin >> consumer_secret;
 
+			cout << "Nivel de acesso: Meocloud/Sandbox? [M/s] ";
+			cin >> sandbox;
+
+			isSandbox = ( sandbox[0] == 's' || sandbox[0] == 'S' );
+
 			cout << endl;
 			cout << "Consumer key introduzida: '" << consumer_key << "'" << endl;
-			cout << "Consumer secret introduzido: '" << consumer_secret << "'" << endl << endl;
+			cout << "Consumer secret introduzido: '" << consumer_secret << "'" << endl;
+			cout << "Nivel de acesso: " << ( isSandbox ? "Sandbox" : "Meocloud" ) << endl << endl;
 
 			cout << "Deseja continuar? [s/N] ";
 
+
 			cin >> cont;
 
-			if( cont != 's' && cont != 'S' )
+			if( cont[0] != 's' && cont[0] != 'S' )
 			{
 				error_stream << "Abortado pelo utilizador.";
 				throw 1;
@@ -193,12 +213,6 @@ int main(int argc, str argv[])
 				throw 1;
 			}
 
-			if( storename == NULL )
-			{
-				error_stream << "Nome e directorio do ficheiro na meocloud nao definido. Utilize a flag '--store' ou '-s'";
-				throw 1;
-			}
-
 			FILE *in = fopen(filename, "rb");
 			if( in == NULL )
 			{
@@ -206,16 +220,42 @@ int main(int argc, str argv[])
 				throw 1;
 			}
 			
-			cout << "Enviando '" << filename << "' para a meocloud como '" << storename << "'" << endl;
-			if( !meocloudAPI->UploadFile(in, storename) )
+
+			bool notgood = true;
+			FileParts parts;
+			GetParts(storename, parts);
+
+			if( parts.filename.empty() )
+			{
+				FileParts oName;
+				GetParts(filename, oName);
+				parts.filename = oName.filename;
+			}
+
+			// try first without creating directories
+			switch( meocloudAPI->UploadFile(in, parts, overwriteFiles, false) )
+			{
+			case 200:
+				notgood = false;
+				break;
+
+			// in case of dir not exist, try creating dirs
+			case 404:
+				if(    createDirectories
+					&& meocloudAPI->UploadFile(in, parts, overwriteFiles, true) == 200 )
+					notgood = false;
+				break;
+			}
+
+			fclose(in);
+
+			if( notgood )
 			{
 				error_stream << "O ficheiro nao foi enviado com sucesso";
 				throw 1;
 			}
 
-			fclose(in);
-
-			cout << "Terminado com sucesso" << endl;
+			cout << "Guardado na meocloud em '" << parts.GetFullName() << "'" << endl;
 		}
 
 
@@ -230,7 +270,7 @@ int main(int argc, str argv[])
 		if( error_stream.eof() )
 			cerr << "Erro inesperado" << endl;
 		else
-			cerr << endl << "[Erro] " << error_stream.str() << endl;
+			cerr << "[Erro] " << error_stream.str() << endl;
 
 		retCode = 2;
 

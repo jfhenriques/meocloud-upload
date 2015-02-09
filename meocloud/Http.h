@@ -26,6 +26,7 @@ namespace Http {
 		CURL* curl;
 		char* memory;
 		size_t size;
+		curl_slist* headers;
 	} CurlCTX;
 
 
@@ -55,7 +56,6 @@ namespace Http {
 		void SetCTX(CurlCTX *ctx);
 
 		str toStr();
-		//void ReleaseStr(str str);
 		
 	};
 
@@ -69,19 +69,19 @@ namespace Http {
 		virtual bool IsChunked() = 0;
 		virtual bool HasSize() = 0;
 		virtual long Size() = 0;
+		virtual void Prepare(CurlCTX *ctx = NULL) {};
 		virtual size_t ReadCallback(void *ptr, size_t size, size_t nmemb) = 0;
 	};
 
-	class EmptyHttpBody: public HttpBody
+	class EmptyHttpBody: virtual public HttpBody
 	{
 	public:
 		bool IsChunked() { return false; }
 		bool HasSize() { return true; }
-		long Size() { return 0; }
+		long Size() { return 0; };
+	
 		size_t ReadCallback(void *ptr, size_t size, size_t nmemb) {
-			(void)ptr;
-			(void)size;
-			(void)nmemb;
+			(void)ptr; (void)size; (void)nmemb;
 			return 0;
 		}
 	};
@@ -90,11 +90,12 @@ namespace Http {
 	{
 	private:
 		bool hasSize;
+		bool chunked;
 		bool hasRead;
 		long size;
 		FILE* stream;
 	public:
-		FileHttpBody(FILE* stream, bool hasSize);
+		FileHttpBody(FILE* stream, bool chunked = false, bool hasSize = false);
 
 		bool IsChunked();
 		bool HasSize();
@@ -103,6 +104,25 @@ namespace Http {
 	};
 
 
+	class URLEncodedHttpBody: virtual public HttpBody
+	{
+	private:
+		long size;
+		c_str data;
+		size_t readPtr;
+		HttpParameters params;
+	public:
+		URLEncodedHttpBody();
+		~URLEncodedHttpBody();
+
+		void AddParam(c_str key, c_str value);
+		void Prepare(CurlCTX *ctx = NULL);
+
+		bool IsChunked();
+		bool HasSize();
+		long Size();
+		size_t ReadCallback(void *ptr, size_t size, size_t nmemb);
+	};
 
 
 
