@@ -333,7 +333,7 @@ namespace Http {
 		if( this->data == NULL )
 			return 0;
 
-		size_t sizeRead = min((size_t)(this->size - this->readPtr), (size_t)(this->size * nmemb) );
+		size_t sizeRead = min((size_t)(this->size - this->readPtr), (size_t)(size * nmemb) );
 		//size_t sizeRead = min((size_t)(min(this->size - this->readPtr, 10)), (size_t)(this->size * nmemb) );
 
 		if( sizeRead > 0 )

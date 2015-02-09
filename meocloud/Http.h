@@ -69,7 +69,7 @@ namespace Http {
 		virtual bool IsChunked() = 0;
 		virtual bool HasSize() = 0;
 		virtual long Size() = 0;
-		virtual void Prepare(CurlCTX *ctx = NULL) {};
+		virtual void Prepare(CurlCTX *ctx = NULL) { (void)ctx; };
 		virtual size_t ReadCallback(void *ptr, size_t size, size_t nmemb) = 0;
 	};
 
