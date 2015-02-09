@@ -408,15 +408,6 @@ namespace Http {
 	}
 
 
-	void Http::Init(void)
-	{
-		curl_global_init(CURL_GLOBAL_ALL);
-	}
-
-	void Http::Terminate(void)
-	{
-		curl_global_cleanup();
-	}
 
 	void Http::releaseResult(HttpResult* result)
 	{
@@ -541,7 +532,8 @@ namespace Http {
 		if( ctx->headers != NULL )
 			curl_easy_setopt(ctx->curl, CURLOPT_HTTPHEADER, ctx->headers);
 
-		//curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
+		if( Http::debug )
+			curl_easy_setopt(ctx->curl, CURLOPT_VERBOSE, 1L);
 
 		/* Perform the request, res will get the return code */ 
 		result->curlStatus = curl_easy_perform(ctx->curl);
@@ -554,6 +546,25 @@ namespace Http {
 
 		return result;
 	}
+
+	// statics
+
+	bool Http::debug = false;
+
+	void Http::Init(void)
+	{
+		curl_global_init(CURL_GLOBAL_ALL);
+	}
+	void Http::Terminate(void)
+	{
+		curl_global_cleanup();
+	}
+	void Http::SetDebug(bool debug)
+	{
+		Http::debug = debug;
+	}
+
+
 
 
 

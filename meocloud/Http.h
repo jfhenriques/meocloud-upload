@@ -129,11 +129,11 @@ namespace Http {
 	class Http {
 
 	private:
+		static bool debug;
 
 	public:
 		Http() {};
 		~Http() {};
-		//~Http(void);
 
 		void releaseResult(HttpResult* result);
 		HttpResult* Request(HttpURL* url, HttpMethod method, HttpBody *body = NULL);
@@ -145,6 +145,8 @@ namespace Http {
 
 		static void Init(void);
 		static void Terminate(void);
+
+		static void SetDebug(bool debug);
 
 	};
 

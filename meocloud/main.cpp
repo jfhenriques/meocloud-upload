@@ -17,8 +17,8 @@ static c_str confFile = "meocloud.conf";
 static bool initMode = false;
 static bool createDirectories = false;
 static bool overwriteFiles = false;
+static bool debugMode = false;
 
-static Document *documentResponse = NULL;
 
 static str parse_argument(int argc, str argv[])
 {
@@ -30,6 +30,11 @@ static str parse_argument(int argc, str argv[])
 
 		if ( strcmp(argv[i], "--init") == 0 )
 			initMode = true;
+
+		else
+		if (   strcmp(argv[i], "-v") == 0
+			|| strcmp(argv[i], "--debug") == 0 )
+			debugMode = true;
 
 		else
 		if (   strcmp(argv[i], "-y") == 0
@@ -75,10 +80,12 @@ int main(int argc, str argv[])
 	stringstream error_stream;
 	str error;
 	int retCode = 0;
+	Document *documentResponse = NULL;
 
 	try {
 
 		::Http::Http::Init();
+
 
 		if( (error = parse_argument(argc, argv)) != NULL )
 		{
@@ -87,6 +94,7 @@ int main(int argc, str argv[])
 			throw 1;
 		}
 
+		::Http::Http::SetDebug(debugMode);
 
 
 	/********************************************************************************************
