@@ -21,6 +21,22 @@ namespace Meocloud {
 	} APITokens;
 
 
+	typedef enum {
+		NORMAL = 1,
+		SMALL,
+	} ShareLinkType;
+
+	typedef struct ShareLinkInfo
+	{
+		string url;
+		string url_small;
+		string expires;
+		string shareid;
+		string *outUrl;
+		ShareLinkType type;
+	} ShareLinkInfo;
+
+
 	class API {
 
 	private:
@@ -42,6 +58,8 @@ namespace Meocloud {
 
 		static const string URL_FILES;
 		static const string URL_CREATE_DIR;
+		static const string URL_SHARE_LINK;
+		static const string URL_SHARE_SMALL;
 
 
 		// ctor & dtor
@@ -78,7 +96,7 @@ namespace Meocloud {
 		int UploadFile(FILE *stream, FileParts parts, bool overwriteFiles = false, bool createDirectories = false);
 
 		int RequestToken(c_str code, APITokens& tokens, bool isRefresh = false);
-
+		int CrceateShareLink(c_str link, ShareLinkInfo &share, ShareLinkType type = ShareLinkType::NORMAL);
 
 		// file save/load
 

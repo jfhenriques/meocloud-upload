@@ -24,6 +24,8 @@ namespace Meocloud {
 
 	const string API::URL_FILES = API::URL_BASE_CONTENT + "Files/";
 	const string API::URL_CREATE_DIR = API::URL_BASE_PUBLIC + "Fileops/CreateFolder";
+	const string API::URL_SHARE_LINK = API::URL_BASE_PUBLIC + "Shares/";
+	const string API::URL_SHARE_SMALL = API::URL_BASE_PUBLIC + "ShortenLinkURL";
 
 
 	static void SetContent(c_str* key, c_str value)
@@ -141,7 +143,7 @@ namespace Meocloud {
 
 			HttpResult* result = httpClient.Post(&url, &body);
 
-			if( result == NULL )
+			if( result == NULL || !result->IsCurlOK() )
 			{
 				outCode = -1;
 				canContinue = false;
@@ -159,14 +161,13 @@ namespace Meocloud {
 		return outCode;
 	}
 
-
+	
 	int API::UploadFile(FILE *stream, FileParts parts, bool overwriteFiles, bool createDirectories)
 	{
 		if( stream == NULL )
 			return -1;
 
 		int outCode;
-		HttpResult* result = NULL;
 
 		if( createDirectories )
 		{
@@ -183,30 +184,25 @@ namespace Meocloud {
 		url.Add("overwrite", overwriteFiles ? "true" : "false");
 
 		FileHttpBody body(stream, false, stream != stdin );
-		result = httpClient.Put(&url, &body);
+		HttpResult* result = httpClient.Put(&url, &body);
 
-		if(    result != NULL
-			&& result->curlStatus == CURLE_OK
-			&& result->ctx != NULL
-			&& result->ctx->memory != NULL )
+		if( result != NULL && result->IsCurlResponseOK() )
 		{
-			outCode = result->statusCode;
+			if( result->statusCode != 200 )
+				outCode = result->statusCode;
 
-			if( result->statusCode == 200 )
+			else
 			{
 				Document doc;
 				doc.Parse(result->ctx->memory);
 
-				if( !doc.IsObject() )
-					outCode = -1;
-
-				else
-				if( body.HasSize() )
+				if( doc.IsObject() )
 				{
-					if(    !doc.HasMember("bytes")
-						|| !doc["bytes"].IsInt64()
-						|| doc["bytes"].GetInt64() != body.Size() )
-						outCode = -1;
+					if( !body.HasSize()
+						|| (   doc.HasMember("bytes")
+							&& doc["bytes"].IsInt64()
+							&& doc["bytes"].GetInt64() == body.Size() ) )
+						outCode = 200;
 				}
 			}
 		}
@@ -221,7 +217,6 @@ namespace Meocloud {
 	{
 
 		HttpURL url( API::OAUTH2_AUTH.c_str());
-		url.Add("redirect_uri", "http://127.0.0.1/callback" );
 		url.Add("response_type", "code");
 		url.Add("client_id", this->consumer_key);
 
@@ -235,7 +230,6 @@ namespace Meocloud {
 
 
 	int API::RequestToken(c_str code, APITokens& tokens, bool isRefresh)
-	//rapidjson::Document* API::RequestToken(c_str code, bool isRefresh)
 	{
 		if( code == NULL )
 			throw MEOCLOUD_EXCEPTION_HTTP;
@@ -250,7 +244,7 @@ namespace Meocloud {
 		HttpURL url( API::OAUTH2_TOKEN.c_str());
 		url.Add("client_id", this->consumer_key);
 		url.Add("client_secret", this->consumer_secret);
-		url.Add("redirect_uri", "http://127.0.0.1/callback" );
+		url.Add("redirect_uri", "oob" );
 
 		if( isRefresh )
 		{
@@ -265,10 +259,7 @@ namespace Meocloud {
 
 		HttpResult* result = httpClient.Post(&url, new EmptyHttpBody());
 
-		if(    result != NULL
-			&& result->curlStatus == CURLE_OK
-			&& result->ctx != NULL
-			&& result->ctx->memory != NULL )
+		if( result != NULL && result->IsCurlResponseOK() )
 		{
 			
 			if( result->statusCode != 200 )
@@ -289,15 +280,98 @@ namespace Meocloud {
 
 						if( !tokens.refresh_token.empty() && !tokens.access_token.empty() )
 							outCode = 200;
-					}
 
-					if( doc.HasMember("expires_in") && doc["expires_in"].IsInt64() )
-						tokens.expires = doc["expires_in"].GetInt64();
+						if( doc.HasMember("expires_in") && doc["expires_in"].IsInt64() )
+							tokens.expires = doc["expires_in"].GetInt64();
+					}
 				}
 			}
 		}
 			
 		httpClient.releaseResult(result);
+
+		return outCode;
+	}
+
+	int API::CrceateShareLink(c_str link, ShareLinkInfo &share, ShareLinkType type)
+	{
+		if( link == NULL )
+			throw MEOCLOUD_EXCEPTION_HTTP;
+
+		int outCode = -1;
+		share.url = "";
+		share.shareid = "";
+		share.expires = "";
+		share.url_small = "";
+		share.type = ShareLinkType::NORMAL;
+
+		HttpURL url( (API::URL_SHARE_LINK + this->ResolveAccessLevel() + link).c_str());
+		url.Add("access_token", this->GetAccessToken() );
+
+		HttpResult* result = httpClient.Post(&url, new EmptyHttpBody());
+
+		if( result != NULL && result->IsCurlResponseOK() )
+		{
+			
+			if( result->statusCode != 200 )
+				outCode = result->statusCode;
+
+			else
+			{
+				Document doc;
+				doc.Parse(result->ctx->memory);
+
+				if( doc.IsObject() )
+				{
+					if(	   doc.HasMember("url") && doc["url"].IsString()
+						&& doc.HasMember("shareid") && doc["shareid"].IsString() )
+					{
+						share.url = doc["url"].GetString();
+						share.shareid = doc["shareid"].GetString();
+						share.expires = doc["expires"].GetString();
+						share.outUrl = &share.url;
+
+						if( !share.url.empty() && !share.shareid.empty() )
+							outCode = 200;
+
+						if( doc.HasMember("expires") && doc["expires"].IsString() )
+							share.expires = doc["expires"].GetString();
+					}
+				}
+			}
+		}
+			
+		httpClient.releaseResult(result);
+
+		if( outCode == 200 && type == ShareLinkType::SMALL )
+		{
+			HttpURL url( API::URL_SHARE_SMALL.c_str() );
+			url.Add("access_token", this->GetAccessToken() );
+
+			URLEncodedHttpBody body;
+			body.AddParam("shareid", share.shareid.c_str());
+
+			HttpResult* result = httpClient.Post(&url, &body);
+
+			if(    result != NULL
+				&& result->IsCurlResponseOK()
+				&& result->statusCode == 200 )
+			{
+				Document doc;
+				doc.Parse(result->ctx->memory);
+
+				if(    doc.IsObject()
+					&& doc.HasMember("url")
+					&& doc["url"].IsString() )
+				{
+					share.url_small = doc["url"].GetString();
+					share.outUrl = &share.url_small;
+					share.type = ShareLinkType::SMALL;
+				}
+			}
+
+			httpClient.releaseResult(result);
+		}
 
 		return outCode;
 	}
@@ -391,5 +465,3 @@ namespace Meocloud {
 	}
 
 }
-
-

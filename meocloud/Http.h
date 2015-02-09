@@ -36,6 +36,18 @@ namespace Http {
 		CURLcode curlStatus;
 		str curlErrorMsg;
 		CurlCTX* ctx;
+
+		bool IsCurlOK()
+		{
+			return(    this->curlStatus == CURLE_OK
+					&& this->ctx != NULL );
+		}
+
+		bool IsCurlResponseOK()
+		{
+			return(    this->IsCurlOK()
+					&& this->ctx->memory != NULL );
+		}
 	} HttpResult;
 
 

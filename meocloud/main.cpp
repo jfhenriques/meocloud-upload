@@ -18,6 +18,8 @@ static bool initMode = false;
 static bool createDirectories = false;
 static bool overwriteFiles = false;
 static bool debugMode = false;
+static bool createShare = false;
+static bool createShareSmall = false;
 
 
 static str parse_argument(int argc, str argv[])
@@ -47,6 +49,18 @@ static str parse_argument(int argc, str argv[])
 			createDirectories = true;
 
 		else
+		if (   strcmp(argv[i], "-s") == 0
+			|| strcmp(argv[i], "--share") == 0 )
+			createShare = true;
+
+		else
+		if (   strcmp(argv[i], "-ss") == 0
+			|| strcmp(argv[i], "--sharesmall") == 0 )
+		{
+			createShare = true;
+			createShareSmall = true;
+		}
+		else
 		if( isNotLast )
 		{
 			if (   strcmp(argv[i], "-f"   ) == 0
@@ -54,8 +68,8 @@ static str parse_argument(int argc, str argv[])
 				filename = argv[++i];
 
 			else
-			if (   strcmp(argv[i], "-s"   ) == 0
-			    || strcmp(argv[i], "--store") == 0 )
+			if (   strcmp(argv[i], "-n"   ) == 0
+			    || strcmp(argv[i], "--name") == 0 )
 				storename = argv[++i];
 
 			else
@@ -230,6 +244,7 @@ int main(int argc, str argv[])
 			int retry = 3;
 			GetParts(storename, parts);
 			APITokens rTokens;
+			string extra;
 
 			if( parts.filename.empty() )
 			{
@@ -260,7 +275,7 @@ int main(int argc, str argv[])
 						meocloudAPI->SetRefreshToken(rTokens.refresh_token.c_str());
 						meocloudAPI->WriteFile(confFile);
 
-						cout << "Access and refresh tokens renewed" << endl;
+						cout << "Os token de acesso e refresh foram renovados" << endl;
 					
 						_continueTry = true;
 					}
@@ -288,7 +303,7 @@ int main(int argc, str argv[])
 					if( retry > 0 )
 					{
 						_continueTry = true;
-						cout << "Retrying to send file" << endl;
+						cout << "Ocorreu um problema. Tentando novamente enviar o ficheiro" << endl;
 					}
 					else
 						_continueTry = false;
@@ -302,11 +317,25 @@ int main(int argc, str argv[])
 
 			if( notgood )
 			{
-				error_stream << "O ficheiro nao foi enviado com sucesso";
+				error_stream << "O ficheiro nao foi enviado";
 				throw 1;
 			}
 
+			if( createShare )
+			{
+				ShareLinkInfo share;
+
+				if( meocloudAPI->CrceateShareLink(parts.GetFullName().c_str(), share,
+								createShareSmall ? ShareLinkType::SMALL: ShareLinkType::NORMAL ) == 200 )
+					extra = "Share link: " + (*share.outUrl);
+				else
+					extra = "Nao foi possível criar o share link";
+			}
+
 			cout << "Guardado na meocloud em '" << parts.GetFullName() << "'" << endl;
+			
+			if( !extra.empty() )
+				cout << extra << endl;
 		}
 
 
