@@ -488,7 +488,6 @@ namespace Http {
 			else
 				ctx->headers = curl_slist_append(ctx->headers, "Transfer-Encoding:");
 				
-
 			if( body->HasSize() )
 			{
 				if( method != HttpMethod::M_PUT || body->Size() == 0 )
@@ -542,7 +541,14 @@ namespace Http {
 
 		/* Check for errors */ 
 		if(result->curlStatus != CURLE_OK)
+		{
 			result->curlErrorMsg = (str)curl_easy_strerror(result->curlStatus);
+
+			if( Http::debug )
+				cerr << "Curl error message: " << result->curlErrorMsg << endl;
+		}
+		if( Http::debug && result->ctx->memory != NULL )
+			cout << "-- Start Output --" << endl << result->ctx->memory << endl << "--End Output--" << endl ;
 
 		return result;
 	}

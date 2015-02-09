@@ -48,14 +48,7 @@ namespace Meocloud {
 		SetContent(&this->consumer_secret, cSecret);
 	};
 
-	//API::API(c_str cKey, c_str cSecret, c_str rToken, c_str aToken)
-	//{
-	//	SetContent(&this->consumer_key, cKey);
-	//	SetContent(&this->consumer_secret, cSecret);
 
-	//	this->SetRefreshToken(rToken);
-	//	this->SetAccessToken(aToken);
-	//};
 	API::~API()
 	{
 		SetContent(&this->consumer_key, NULL);
@@ -172,53 +165,50 @@ namespace Meocloud {
 		if( stream == NULL )
 			return -1;
 
-		int outCode = -1;
+		int outCode;
 		HttpResult* result = NULL;
 
-		try {
+		if( createDirectories )
+		{
+			outCode = this->CreateFolder(parts.directory.c_str());
+			if( !API::IsCreateDirectoryCodeOK( outCode ) )
+				return outCode;
+		}
 
-			if( createDirectories )
+		outCode = -1;
+
+
+		HttpURL url( (API::URL_FILES + this->ResolveAccessLevel() + parts.GetFullName()).c_str());
+		url.Add("access_token", this->GetAccessToken() );
+		url.Add("overwrite", overwriteFiles ? "true" : "false");
+
+		FileHttpBody body(stream, false, stream != stdin );
+		result = httpClient.Put(&url, &body);
+
+		if(    result != NULL
+			&& result->curlStatus == CURLE_OK
+			&& result->ctx != NULL
+			&& result->ctx->memory != NULL )
+		{
+			outCode = result->statusCode;
+
+			if( result->statusCode == 200 )
 			{
-				if( !API::IsCreateDirectoryCodeOK( this->CreateFolder(parts.directory.c_str()) ) )
-					return -1;
-			}
+				Document doc;
+				doc.Parse(result->ctx->memory);
 
+				if( !doc.IsObject() )
+					outCode = -1;
 
-			HttpURL url( (API::URL_FILES + this->ResolveAccessLevel() + parts.GetFullName()).c_str());
-			url.Add("access_token", this->GetAccessToken() );
-			url.Add("overwrite", overwriteFiles ? "true" : "false");
-
-			FileHttpBody body(stream, false, stream != stdin );
-			result = httpClient.Put(&url, &body);
-
-			if(    result != NULL
-				&& result->curlStatus == CURLE_OK
-				&& result->ctx != NULL
-				&& result->ctx->memory != NULL )
-			{
-				outCode = result->statusCode;
-
-				if( result->statusCode == 200 )
+				else
+				if( body.HasSize() )
 				{
-					Document doc;
-					doc.Parse(result->ctx->memory);
-
-					if( !doc.IsObject() )
+					if(    !doc.HasMember("bytes")
+						|| !doc["bytes"].IsInt64()
+						|| doc["bytes"].GetInt64() != body.Size() )
 						outCode = -1;
-
-					else
-					if( body.HasSize() )
-					{
-						if(    !doc.HasMember("bytes")
-							|| !doc["bytes"].IsInt64()
-							|| doc["bytes"].GetInt64() != body.Size() )
-							outCode = -1;
-					}
 				}
 			}
-	
-		} catch(exception& e) {
-			cout << e.what() << endl;
 		}
 
 		if( result != NULL )
@@ -229,6 +219,7 @@ namespace Meocloud {
 
 	string API::GetAuthorizationURL()
 	{
+
 		HttpURL url( API::OAUTH2_AUTH.c_str());
 		url.Add("redirect_uri", "http://127.0.0.1/callback" );
 		url.Add("response_type", "code");
@@ -243,50 +234,72 @@ namespace Meocloud {
 	}
 
 
-
-	rapidjson::Document* API::RequestToken(c_str code, bool isRefresh)
+	int API::RequestToken(c_str code, APITokens& tokens, bool isRefresh)
+	//rapidjson::Document* API::RequestToken(c_str code, bool isRefresh)
 	{
 		if( code == NULL )
 			throw MEOCLOUD_EXCEPTION_HTTP;
 
-		Document *docOut = NULL;
+		int outCode = -1;
 
-		try {
+		tokens.access_token = "";
+		tokens.refresh_token = "";
+		tokens.type = "";
+		tokens.expires = -1;
 
-			HttpURL url( API::OAUTH2_TOKEN.c_str());
-			url.Add("client_id", this->consumer_key);
-			url.Add("client_secret", this->consumer_secret);
+		HttpURL url( API::OAUTH2_TOKEN.c_str());
+		url.Add("client_id", this->consumer_key);
+		url.Add("client_secret", this->consumer_secret);
+		url.Add("redirect_uri", "http://127.0.0.1/callback" );
+
+		if( isRefresh )
+		{
+			url.Add("grant_type", "refresh_token");
+			url.Add("refresh_token", code);
+		}
+		else
+		{
 			url.Add("grant_type", "authorization_code");
-			url.Add("redirect_uri", "http://127.0.0.1/callback" );
-
-			if( isRefresh )
-				url.Add("refresh_token", code);
-			else
-				url.Add("code", code);
-
-			HttpResult* result = httpClient.Post(&url, new EmptyHttpBody());
-
-			if(    result != NULL
-				&& result->curlStatus == CURLE_OK
-				&& result->statusCode == 200
-				&& result->ctx != NULL
-				&& result->ctx->memory != NULL )
-			{
-				str response = result->ctx->memory;
-				Document* doc = new Document;
-				doc->Parse(response);
-
-				if( doc->IsObject() )
-					docOut = doc;
-			}
-			
-			httpClient.releaseResult(result);
-	
-		} catch(exception& e) {
-			cout << e.what() << endl;
+			url.Add("code", code);
 		}
 
-		return docOut;
+		HttpResult* result = httpClient.Post(&url, new EmptyHttpBody());
+
+		if(    result != NULL
+			&& result->curlStatus == CURLE_OK
+			&& result->ctx != NULL
+			&& result->ctx->memory != NULL )
+		{
+			
+			if( result->statusCode != 200 )
+				outCode = result->statusCode;
+
+			else
+			{
+				Document doc;
+				doc.Parse(result->ctx->memory);
+
+				if( doc.IsObject() )
+				{
+					if(	   doc.HasMember("access_token") && doc["access_token"].IsString()
+						&& doc.HasMember("refresh_token") && doc["refresh_token"].IsString() )
+					{
+						tokens.refresh_token = doc["refresh_token"].GetString();
+						tokens.access_token = doc["access_token"].GetString();
+
+						if( !tokens.refresh_token.empty() && !tokens.access_token.empty() )
+							outCode = 200;
+					}
+
+					if( doc.HasMember("expires_in") && doc["expires_in"].IsInt64() )
+						tokens.expires = doc["expires_in"].GetInt64();
+				}
+			}
+		}
+			
+		httpClient.releaseResult(result);
+
+		return outCode;
 	}
 
 

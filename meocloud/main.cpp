@@ -80,7 +80,6 @@ int main(int argc, str argv[])
 	stringstream error_stream;
 	str error;
 	int retCode = 0;
-	Document *documentResponse = NULL;
 
 	try {
 
@@ -108,8 +107,6 @@ int main(int argc, str argv[])
 			string consumer_key;
 			string consumer_secret;
 			string code;
-			string refresh_token;
-			string access_token;
 
 			string cont;
 			string sandbox;
@@ -158,39 +155,34 @@ int main(int argc, str argv[])
 
 			cin >> code;
 			
-			documentResponse = meocloudAPI.RequestToken(code.c_str());
-			if(    documentResponse == NULL
-				|| !documentResponse->HasMember("access_token") || !(*documentResponse)["access_token"].IsString()
-				|| !documentResponse->HasMember("refresh_token") || !(*documentResponse)["refresh_token"].IsString() )
+			APITokens tokens;
+			int statusCode = meocloudAPI.RequestToken(code.c_str(), tokens);
+
+			if( statusCode == -1 )
 			{
-				error_stream << "Autorizacao de acesso. Verifique os dados inseridos e tente de novo.";
+				error_stream << "Ocorreu um problema ao receber a resposta da meocloud. Tente novamente.";
 				throw 1;
 			}
 
-			refresh_token = (*documentResponse)["refresh_token"].GetString();
-			access_token = (*documentResponse)["access_token"].GetString();
-
-			if( refresh_token.empty() || access_token.empty() )
+			if( statusCode != 200 )
 			{
-				error_stream << "Os dados recebidos nao estao correctos. Tente novamente.";
+				error_stream << "Autorizacao de acesso. Verifique os dados inseridos e tente novamente.";
 				throw 1;
 			}
+
 
 			cout << endl;
-			cout << "Refresh Token: " << refresh_token << endl;
-			cout << "Access Token: " << access_token << endl;
+			cout << "Refresh Token: " << tokens.refresh_token << endl;
+			cout << "Access Token: " << tokens.access_token << endl;
 
-			if( documentResponse->HasMember("expires_in") && (*documentResponse)["expires_in"].IsInt() )
+			if( tokens.expires > 0 )
 			{
-				cout << "Token recebido expira dentro de " << (*documentResponse)["expires_in"].GetInt() << " segundos" << endl;
+				cout << "Token recebido expira dentro de " << tokens.expires << " segundos" << endl;
 
 			}
-
-			delete documentResponse;
-			documentResponse = NULL;
 			
-			meocloudAPI.SetRefreshToken(refresh_token.c_str());
-			meocloudAPI.SetAccessToken(access_token.c_str());
+			meocloudAPI.SetRefreshToken(tokens.refresh_token.c_str());
+			meocloudAPI.SetAccessToken(tokens.access_token.c_str());
 
 			meocloudAPI.WriteFile(confFile);
 
@@ -215,6 +207,7 @@ int main(int argc, str argv[])
 				throw 1;
 			}
 
+
 			if( filename == NULL )
 			{
 				error_stream << "Nome do ficheiro para upload nao definido. Utilize a flag '--file' ou '-f'";
@@ -230,8 +223,13 @@ int main(int argc, str argv[])
 			
 
 			bool notgood = true;
+			bool firstTime = true;
+			bool _continueTry = false;
+			int statusCode;
 			FileParts parts;
+			int retry = 3;
 			GetParts(storename, parts);
+			APITokens rTokens;
 
 			if( parts.filename.empty() )
 			{
@@ -240,20 +238,65 @@ int main(int argc, str argv[])
 				parts.filename = oName.filename;
 			}
 
-			// try first without creating directories
-			switch( meocloudAPI->UploadFile(in, parts, overwriteFiles, false) )
+			do
 			{
-			case 200:
-				notgood = false;
-				break;
+				_continueTry = false;
 
-			// in case of dir not exist, try creating dirs
-			case 404:
-				if(    createDirectories
-					&& meocloudAPI->UploadFile(in, parts, overwriteFiles, true) == 200 )
+				// try first without creating directories
+				switch( meocloudAPI->UploadFile(in, parts, overwriteFiles) )
+				{
+				// all ok
+				case 200:
 					notgood = false;
-				break;
-			}
+					break;
+
+				// token expired? try to renew
+				case 401:
+					
+					statusCode = meocloudAPI->RequestToken(meocloudAPI->GetRefreshToken(), rTokens, true);
+					if( statusCode == 200 )
+					{
+						meocloudAPI->SetAccessToken(rTokens.access_token.c_str());
+						meocloudAPI->SetRefreshToken(rTokens.refresh_token.c_str());
+						meocloudAPI->WriteFile(confFile);
+
+						cout << "Access and refresh tokens renewed" << endl;
+					
+						_continueTry = true;
+					}
+
+					break;
+
+				// in case of dir not exist, give a try to create dirs
+				case 404:
+
+					if( firstTime )
+					{
+						firstTime = false;
+
+						if(    createDirectories
+							&& API::IsCreateDirectoryCodeOK( meocloudAPI->CreateFolder( parts.directory.c_str() ) ) )
+							_continueTry = true;
+					}
+
+					break;
+
+				// fallback and retry
+				default:
+
+					retry--;
+					if( retry > 0 )
+					{
+						_continueTry = true;
+						cout << "Retrying to send file" << endl;
+					}
+					else
+						_continueTry = false;
+
+					break;
+				}
+
+			} while(_continueTry);
 
 			fclose(in);
 
@@ -270,7 +313,7 @@ int main(int argc, str argv[])
 
 	} catch(exception &e) {
 
-		cerr << "Erro: " << e.what() << endl;
+		cerr << "Exception: " << e.what() << endl;
 		retCode = 1;
 
 	} catch(...) {
@@ -281,9 +324,6 @@ int main(int argc, str argv[])
 			cerr << "[Erro] " << error_stream.str() << endl;
 
 		retCode = 2;
-
-		if( documentResponse != NULL )
-			delete documentResponse;
 	}
 
 	::Http::Http::Terminate();

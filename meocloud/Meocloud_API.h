@@ -12,6 +12,13 @@ using namespace std;
 
 namespace Meocloud {
 
+	typedef struct APITokens
+	{
+		string refresh_token;
+		string access_token;
+		string type;
+		long expires;
+	} APITokens;
 
 
 	class API {
@@ -70,7 +77,7 @@ namespace Meocloud {
 		int CreateFolder(c_str name);
 		int UploadFile(FILE *stream, FileParts parts, bool overwriteFiles = false, bool createDirectories = false);
 
-		rapidjson::Document* RequestToken(c_str code, bool isRefresh = false);
+		int RequestToken(c_str code, APITokens& tokens, bool isRefresh = false);
 
 
 		// file save/load
