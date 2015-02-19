@@ -136,7 +136,7 @@ FILE* GetConfFilePtr(c_str file, bool isWrite)
 
 #else
 
-	return fopen(in == NULL ? DEFAULT_CONF_PATH : in , isWrite ? CONF_TXT_W : CONF_TXT_R);
+	return fopen(file == NULL ? DEFAULT_CONF_PATH : file, isWrite ? CONF_TXT_W : CONF_TXT_R);
 #endif
 
 }

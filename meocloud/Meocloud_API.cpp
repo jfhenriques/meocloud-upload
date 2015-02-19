@@ -430,7 +430,9 @@ namespace Meocloud {
 		fclose(fp);
 
 #ifdef OS_UNIX
-		chmod(file, "600");
+		char mode[] = "0600";
+		int modeL = strtol(mode, 0, 8);
+		chmod(file, modeL);
 #endif
 
 	}
