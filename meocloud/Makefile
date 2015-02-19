@@ -18,7 +18,7 @@ $(SRCS:.c=.d):%.c
 	$(CC) $(CXXFLAGS)  $< >$@
 	
 install:
-        cp $(TARGET) -f $(DESTDIR)/usr/local/bin/$(TARGTET)
+	cp $(TARGET) -f $(DESTDIR)/usr/local/bin/$(TARGTET)
 
 .PHONY: clean
 
