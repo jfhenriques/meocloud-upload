@@ -7,6 +7,10 @@
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/prettywriter.h>
 
+#ifdef OS_UNIX
+#include <sys/stat.h>
+#endif
+
 using namespace std;
 using namespace Http;
 using namespace rapidjson;
@@ -377,12 +381,21 @@ namespace Meocloud {
 	}
 
 
+	bool API::IsCreateDirectoryCodeOK(int code)
+	{
+		return code == 200 || code == 403;
+	}
+
+
 	void API::WriteFile(c_str file)
 	{
-		if( file == NULL )
-			throw MEOCLOUD_EXCEPTION_HTTP;
 
-		FILE* fp = fopen(file, "wb");
+#ifdef OS_UNIX
+		if( file == NULL )
+			file = DEFAULT_CONF_PATH;
+#endif
+
+		FILE* fp = GetConfFilePtr(file, true);
 
 		if( fp == NULL )
 			throw MEOCLOUD_EXCEPTION_HTTP;
@@ -415,22 +428,21 @@ namespace Meocloud {
 		dd.Accept(writer);
 
 		fclose(fp);
+
+#ifdef OS_UNIX
+		chmod(file, "600");
+#endif
+
 	}
 
-
-
-	bool API::IsCreateDirectoryCodeOK(int code)
-	{
-		return code == 200 || code == 403 ;
-	}
 
 	
 	API* API::FromFile(c_str file)
 	{
-		if( file == NULL )
-			throw MEOCLOUD_EXCEPTION_HTTP;
+		//if( file == NULL )
+		//	throw MEOCLOUD_EXCEPTION_HTTP;
 
-		FILE* fp = fopen(file, "rb");
+		FILE* fp = GetConfFilePtr(file);
 
 		if( fp == NULL )
 			return NULL;

@@ -13,7 +13,7 @@ using namespace rapidjson;
 
 static c_str filename = NULL;
 static c_str storename = NULL;
-static c_str confFile = "meocloud.conf";
+static c_str confFile = NULL;
 static bool initMode = false;
 static bool createDirectories = false;
 static bool overwriteFiles = false;

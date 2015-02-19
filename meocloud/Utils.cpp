@@ -5,6 +5,13 @@
 #include "Utils.h"
 
 
+#ifdef OS_WINDOWS
+#include <tchar.h>
+#include <Shlobj.h>
+#include <sstream>
+#endif
+
+
 using namespace std;
 
 
@@ -79,4 +86,57 @@ void GetParts(string file, FileParts& parts)
 			} while(end < tSize);
 		}
 	}
+}
+
+#ifdef OS_WINDOWS
+
+static BOOL DirectoryExists(LPCTSTR szPath)
+{
+	DWORD dwAttrib = GetFileAttributes(szPath);
+
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+		   (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+#endif
+
+FILE* GetConfFilePtr(c_str file, bool isWrite)
+{
+
+#ifdef OS_WINDOWS
+
+	if (file != NULL)
+		return fopen(file, isWrite ? CONF_TXT_W : CONF_TXT_R);
+
+	FILE *filePtr = NULL;
+	wchar_t *localAppData = NULL;
+	LPCTSTR wpath = NULL;
+	wstringstream ss;
+	wstring wspath;
+
+	// Fetch Local App Data folder path.
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &localAppData);
+
+	ss << localAppData << _T(DEFAULT_CONF_DIR);
+	wspath = ss.str();
+	wpath = wspath.c_str();
+
+	CoTaskMemFree(static_cast<void*>(localAppData));
+
+	if (DirectoryExists(wpath) || CreateDirectory(wpath, NULL) != 0)
+	{
+		ss << _T(DEFAULT_CONF_FILE);
+
+		wspath = ss.str();
+		wpath = wspath.c_str();
+
+		filePtr = _wfopen(wpath, isWrite ? _T(CONF_TXT_W) : _T(CONF_TXT_R));
+	}
+
+	return filePtr;
+
+#else
+
+	return fopen(in == NULL ? DEFAULT_CONF_PATH : in , isWrite ? CONF_TXT_W : CONF_TXT_R);
+#endif
+
 }
