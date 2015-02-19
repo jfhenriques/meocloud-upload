@@ -5,9 +5,9 @@
 
 #ifdef __unix__
 
+
 #define OS_UNIX
 
-#define DEFAULT_CONF_PATH	"/etc/meocloud.conf"
 #define CONF_TXT_R "rb"
 #define CONF_TXT_W "wb"
 
@@ -18,7 +18,6 @@
 #include <Windows.h>
 
 #define DEFAULT_CONF_DIR	"\\MeocloudUpload"
-#define DEFAULT_CONF_FILE	"\\meocloud.conf"
 
 #define CONF_TXT_R "r"
 #define CONF_TXT_W "w"
@@ -26,6 +25,8 @@
 
 #endif
 
+
+#define DEFAULT_CONF_FILE	"meocloud.conf"
 
 #include <string>
 
@@ -56,6 +57,11 @@ str StrCopy(c_str in);
 void GetParts(std::string file, FileParts& parts);
 void GetParts(c_str file, FileParts& parts);
 FILE* GetConfFilePtr(c_str in, bool isWrite = false);
+
+#ifdef OS_UNIX
+c_str GetUnixDefaultConfFile();
+#endif
+
 
 
 #endif /* _UTILS_H_ */

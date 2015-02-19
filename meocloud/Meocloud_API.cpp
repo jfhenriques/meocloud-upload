@@ -391,8 +391,13 @@ namespace Meocloud {
 	{
 
 #ifdef OS_UNIX
+		c_str defPath = NULL;
 		if( file == NULL )
-			file = DEFAULT_CONF_PATH;
+		{
+			defPath = GetUnixDefaultConfFile();
+			file = defPath;
+		}
+		cout << "Using: "  << file << endl;
 #endif
 
 		FILE* fp = GetConfFilePtr(file, true);
@@ -433,6 +438,9 @@ namespace Meocloud {
 		char mode[] = "0600";
 		int modeL = strtol(mode, 0, 8);
 		chmod(file, modeL);
+
+		if (defPath != NULL)
+			delete[] defPath;
 #endif
 
 	}

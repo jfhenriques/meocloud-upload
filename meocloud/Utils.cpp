@@ -3,12 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Utils.h"
-
+#include <sstream>
 
 #ifdef OS_WINDOWS
 #include <tchar.h>
 #include <Shlobj.h>
-#include <sstream>
+
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 #endif
 
 
@@ -20,8 +24,8 @@ str StrCopy(c_str in)
 	if( in == NULL )
 		return NULL;
 
-	size_t size = strlen(in);
-	char *tmp = new char[size + 1];
+	size_t size = 1 + strlen(in);
+	char *tmp = new char[size ];
 
 	if( tmp != NULL )
 	{
@@ -99,6 +103,31 @@ static BOOL DirectoryExists(LPCTSTR szPath)
 }
 #endif
 
+#ifdef OS_UNIX
+
+c_str GetUnixDefaultConfFile()
+{
+	stringstream ss;
+	string path;
+	uid_t  uid = getuid();
+
+	if (uid == 0)
+		ss << "/etc/";
+
+	else
+	{
+		struct passwd *pw = getpwuid(uid);
+		ss << pw->pw_dir << "/.";
+	}
+
+	ss << DEFAULT_CONF_FILE;
+	path = ss.str();
+
+	return StrCopy(path.c_str());
+}
+
+#endif
+
 FILE* GetConfFilePtr(c_str file, bool isWrite)
 {
 
@@ -124,7 +153,7 @@ FILE* GetConfFilePtr(c_str file, bool isWrite)
 
 	if (DirectoryExists(wpath) || CreateDirectory(wpath, NULL) != 0)
 	{
-		ss << _T(DEFAULT_CONF_FILE);
+		ss << "\\" << _T(DEFAULT_CONF_FILE);
 
 		wspath = ss.str();
 		wpath = wspath.c_str();
@@ -134,9 +163,23 @@ FILE* GetConfFilePtr(c_str file, bool isWrite)
 
 	return filePtr;
 
+#elif OS_UNIX
+
+	c_str defPath = NULL;
+
+	if( file == NULL )
+		defPath = GetUnixDefaultConfFile();
+
+	FILE filePtr = fopen(file == NULL ? defPath : file, isWrite ? CONF_TXT_W : CONF_TXT_R);
+
+	if( defPath != NULL )
+		delete[] defPath;
+
+	return filePtr;
+
 #else
 
-	return fopen(file == NULL ? DEFAULT_CONF_PATH : file, isWrite ? CONF_TXT_W : CONF_TXT_R);
+	return NULL;
 #endif
 
 }
