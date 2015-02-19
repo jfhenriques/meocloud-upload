@@ -140,7 +140,7 @@ int main(int argc, str argv[])
 
 			cout << "  -n,  --name CAMINHO\t Caminho a ser guardado na meocloud" << endl;
 			cout << "  \t\t\t  Pode ser um directorio e/ou o nome de ficheiro" << endl;
-			cout << "  \t\t\t  Quando omitido é guardado na raiz da Meocloud" << endl;
+			cout << "  \t\t\t  Quando omitido e guardado na raiz da Meocloud" << endl;
 			cout << "  \t\t\t  com o mesmo nome do ficheiro de origem" << endl;
 
 			cout << "  -d,  --createdirs\t Se necessario tenta criar na Meocloud" << endl;
