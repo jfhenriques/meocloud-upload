@@ -131,7 +131,7 @@ c_str GetUnixDefaultConfFile()
 FILE* GetConfFilePtr(c_str file, bool isWrite)
 {
 
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS)
 
 	if (file != NULL)
 		return fopen(file, isWrite ? CONF_TXT_W : CONF_TXT_R);
@@ -163,7 +163,7 @@ FILE* GetConfFilePtr(c_str file, bool isWrite)
 
 	return filePtr;
 
-#elif OS_UNIX
+#elif defined(OS_UNIX)
 
 	c_str defPath = NULL;
 
