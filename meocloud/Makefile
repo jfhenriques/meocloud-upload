@@ -12,7 +12,7 @@ OBJECTS=$(SOURCES:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(CC) -s -o $@ $(OBJECTS) $(LDFLAGS)
 
 $(SRCS:.c=.d):%.c
 	$(CC) $(CXXFLAGS)  $< >$@
