@@ -20,6 +20,7 @@ static bool overwriteFiles = false;
 static bool debugMode = false;
 static bool createShare = false;
 static bool createShareSmall = false;
+static bool showHelp = false;
 
 
 static str parse_argument(int argc, str argv[])
@@ -32,6 +33,11 @@ static str parse_argument(int argc, str argv[])
 
 		if ( strcmp(argv[i], "--init") == 0 )
 			initMode = true;
+
+		else
+		if (   strcmp(argv[i], "-h") == 0
+			|| strcmp(argv[i], "--help") == 0)
+			showHelp = true;
 
 		else
 		if (   strcmp(argv[i], "-v") == 0
@@ -97,6 +103,7 @@ int main(int argc, str argv[])
 
 	try {
 
+
 		::Http::Http::Init();
 
 
@@ -111,11 +118,59 @@ int main(int argc, str argv[])
 
 
 	/********************************************************************************************
+	*
+	*	Help mode
+	*
+	********************************************************************************************/
+
+		if (showHelp)
+		{
+
+			cout <<"meocloud [Opts] [--init|-f FICHEIRO] " << endl << endl;
+
+			cout << "  --init\t\t Inicializa e configura a aplicacao" << endl;
+			cout << "  -f,  --file FICHEIRO\t Ficheiro a ser enviado para a Meocloud" << endl << endl;
+
+			cout << " Parametros Opcionais:" << endl;
+
+			cout << "  -c,  --conf CONFIG\t Caminho do ficheiro de configuracao" << endl;
+			cout << "  \t\t\t  Quando omitido utiliza por defeito:" << endl;
+			cout << "  \t\t\t  - %APPDATA%\\MeocloudUpload\\meocloud.conf no Windows" << endl;
+			cout << "  \t\t\t  - /etc/meocloud.conf em Linux" << endl ;
+
+			cout << "  -n,  --name CAMINHO\t Caminho a ser guardado na meocloud" << endl;
+			cout << "  \t\t\t  Pode ser um directorio e/ou o nome de ficheiro" << endl;
+			cout << "  \t\t\t  Quando omitido é guardado na raiz da Meocloud" << endl;
+			cout << "  \t\t\t  com o mesmo nome do ficheiro de origem" << endl;
+
+			cout << "  -d,  --createdirs\t Se necessario tenta criar na Meocloud" << endl;
+			cout << "  \t\t\t  os directorios definidos com com a flag -n " << endl;
+
+			cout << "  -s,  --share\t\t Cria e imprime um link de partilha" << endl;
+			cout << "  \t\t\t  para o ficheiro enviado" << endl;
+
+			cout << "  -ss, --sharesmall\t Cria e imprime um link minimizado de partilha" << endl;
+			cout << "  \t\t\t  para o ficheiro enviado" << endl;
+
+			cout << "  -y,  --overwrite\t Reescreve o ficheiro de destino caso ja exista" << endl;
+
+			cout << "  -v,  --debug\t\t Activa o modo de debug" << endl;
+			cout << "  -h,  --help\t\t Mostra esta ajuda" << endl << endl;
+
+			cout << " Exemplos de utilizacao:" << endl;
+			cout << "  meocloud --init" << endl;
+			cout << "  meocloud -f backup.zip" << endl;
+			cout << "  meocloud -f IMG123.jpg -n /Fotos/Ferias/Foto_123.jpg -d -ss -y" << endl;
+		}
+
+
+	/********************************************************************************************
 	 *
 	 *	initialize mode
 	 *
 	 ********************************************************************************************/
 
+		else
 		if( initMode )
 		{
 			string consumer_key;
