@@ -166,11 +166,13 @@ FILE* GetConfFilePtr(c_str file, bool isWrite)
 #elif defined(OS_UNIX)
 
 	c_str defPath = NULL;
-
 	if( file == NULL )
+	{
 		defPath = GetUnixDefaultConfFile();
+		file = defPath;
+	}
 
-	FILE filePtr = fopen(file == NULL ? defPath : file, isWrite ? CONF_TXT_W : CONF_TXT_R);
+	FILE *filePtr = fopen(file, isWrite ? CONF_TXT_W : CONF_TXT_R);
 
 	if( defPath != NULL )
 		delete[] defPath;

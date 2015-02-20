@@ -3,3 +3,6 @@ all:
 
 clean:
 	cd meocloud ; make clean
+
+install:
+	cd meocloud ; make install

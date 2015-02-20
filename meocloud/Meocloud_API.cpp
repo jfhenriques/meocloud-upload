@@ -397,7 +397,6 @@ namespace Meocloud {
 			defPath = GetUnixDefaultConfFile();
 			file = defPath;
 		}
-		cout << "Using: "  << file << endl;
 #endif
 
 		FILE* fp = GetConfFilePtr(file, true);
