@@ -136,7 +136,8 @@ int main(int argc, str argv[])
 			cout << "  -c,  --conf CONFIG\t Caminho do ficheiro de configuracao" << endl;
 			cout << "  \t\t\t  Quando omitido utiliza por defeito:" << endl;
 			cout << "  \t\t\t  - %APPDATA%\\MeocloudUpload\\meocloud.conf no Windows" << endl;
-			cout << "  \t\t\t  - /etc/meocloud.conf em Linux" << endl ;
+			cout << "  \t\t\t  - /etc/meocloud.conf em Linux com o utilizador root" << endl ;
+			cout << "  \t\t\t  - ~/.meocloud.conf em Linux com outros utilizadores" << endl;
 
 			cout << "  -n,  --name CAMINHO\t Caminho a ser guardado na meocloud" << endl;
 			cout << "  \t\t\t  Pode ser um directorio e/ou o nome de ficheiro" << endl;
