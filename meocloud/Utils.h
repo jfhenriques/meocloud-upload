@@ -62,7 +62,7 @@ FILE* GetConfFilePtr(c_str in, bool isWrite = false);
 std::string QuickEscape(c_str strIn, CURL *curlIn = NULL);
 std::string QuickEscape(std::string strIn, CURL *curlIn = NULL);
 
-std::string* ReplaceInString(std::string &in, const std::string &search, const std::string &replace);
+void ReplaceInString(std::string &in, const std::string &search, const std::string &replace);
 
 #ifdef OS_UNIX
 c_str GetUnixDefaultConfFile();

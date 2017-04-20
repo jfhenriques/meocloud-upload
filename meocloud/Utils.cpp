@@ -63,7 +63,7 @@ string QuickEscape(string strIn, CURL *curlIn) {
 }
 
 
-string* ReplaceInString(string &in, const string &search, const string &replace) {
+void ReplaceInString(string &in, const string &search, const string &replace) {
 	std::string::size_type n = 0;
 
 	while ((n = in.find(search, n)) != std::string::npos)
@@ -71,8 +71,6 @@ string* ReplaceInString(string &in, const string &search, const string &replace)
 		in.replace(n, search.size(), replace);
 		n += replace.size();
 	}
-
-	return &in;
 }
 
 
