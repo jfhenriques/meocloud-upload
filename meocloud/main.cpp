@@ -252,6 +252,7 @@ int main(int argc, str argv[])
 			
 			meocloudAPI.SetRefreshToken(tokens.refresh_token.c_str());
 			meocloudAPI.SetAccessToken(tokens.access_token.c_str());
+			meocloudAPI.SetSandbox(isSandbox);
 
 			meocloudAPI.WriteFile(confFile);
 

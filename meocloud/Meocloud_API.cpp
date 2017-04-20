@@ -166,7 +166,7 @@ namespace Meocloud {
 	}
 
 	
-	int API::UploadFile(FILE *stream, FileParts parts, bool overwriteFiles, bool createDirectories)
+	int API::UploadFile(FILE *stream, FileParts &parts, bool overwriteFiles, bool createDirectories)
 	{
 		if( stream == NULL )
 			return -1;
@@ -207,6 +207,11 @@ namespace Meocloud {
 							&& doc["bytes"].IsInt64()
 							&& doc["bytes"].GetInt64() == body.Size() ) )
 						outCode = 200;
+						
+					if (doc.HasMember("path") && doc["path"].IsString()) {
+						string fname = doc["path"].GetString();
+						GetParts(fname, parts);
+					}
 				}
 			}
 		}

@@ -24,8 +24,8 @@ str StrCopy(c_str in)
 	if( in == NULL )
 		return NULL;
 
-	size_t size = 1 + strlen(in);
-	char *tmp = new char[size ];
+	size_t size = strlen(in);
+	char *tmp = new char[size + 1];
 
 	if( tmp != NULL )
 	{

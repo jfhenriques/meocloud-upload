@@ -17,7 +17,7 @@ namespace Meocloud {
 		string refresh_token;
 		string access_token;
 		string type;
-		long expires;
+		long long expires;
 	} APITokens;
 
 
@@ -93,7 +93,7 @@ namespace Meocloud {
 		// Operations
 
 		int CreateFolder(c_str name);
-		int UploadFile(FILE *stream, FileParts parts, bool overwriteFiles = false, bool createDirectories = false);
+		int UploadFile(FILE *stream, FileParts &parts, bool overwriteFiles = false, bool createDirectories = false);
 
 		int RequestToken(c_str code, APITokens& tokens, bool isRefresh = false);
 		int CrceateShareLink(c_str link, ShareLinkInfo &share, ShareLinkType type = ShareLinkType::NORMAL);
