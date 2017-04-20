@@ -182,8 +182,7 @@ namespace Meocloud {
 
 		outCode = -1;
 
-
-		HttpURL url( (API::URL_FILES + this->ResolveAccessLevel() + parts.GetFullName()).c_str());
+		HttpURL url(ReplaceInString(API::URL_FILES + this->ResolveAccessLevel() + parts.GetFullName(), " ", "%20")->c_str());
 		url.Add("access_token", this->GetAccessToken() );
 		url.Add("overwrite", overwriteFiles ? "true" : "false");
 
@@ -314,7 +313,7 @@ namespace Meocloud {
 		share.url_small = "";
 		share.type = ShareLinkType::NORMAL;
 
-		HttpURL url( (API::URL_SHARE_LINK + this->ResolveAccessLevel() + link).c_str());
+		HttpURL url(ReplaceInString(API::URL_SHARE_LINK + this->ResolveAccessLevel() + link, " ", "%20")->c_str());
 		url.Add("access_token", this->GetAccessToken() );
 
 		HttpResult* result = httpClient.Post(&url, new EmptyHttpBody());

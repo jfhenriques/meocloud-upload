@@ -29,6 +29,7 @@
 #define DEFAULT_CONF_FILE	"meocloud.conf"
 
 #include <string>
+#include <curl/curl.h>
 
 
 #define MEOCLOUD_OK 0
@@ -57,6 +58,11 @@ str StrCopy(c_str in);
 void GetParts(std::string file, FileParts& parts);
 void GetParts(c_str file, FileParts& parts);
 FILE* GetConfFilePtr(c_str in, bool isWrite = false);
+
+std::string QuickEscape(c_str strIn, CURL *curlIn = NULL);
+std::string QuickEscape(std::string strIn, CURL *curlIn = NULL);
+
+std::string* ReplaceInString(std::string &in, const std::string &search, const std::string &replace);
 
 #ifdef OS_UNIX
 c_str GetUnixDefaultConfFile();

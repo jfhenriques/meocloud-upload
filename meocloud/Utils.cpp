@@ -36,6 +36,45 @@ str StrCopy(c_str in)
 }
 
 
+string QuickEscape(c_str strIn, CURL *curlIn) {
+	CURL *curl = curlIn;
+	char *output = NULL;
+	string out;
+
+	if (curl == NULL)
+		curl = curl_easy_init();
+
+	if (curl) {
+
+		char *output = curl_easy_escape(curl, strIn, 0);
+		if (output) {
+			out.assign(output);
+			curl_free(output);
+		}
+
+		if (curlIn != NULL)
+			curl_easy_cleanup(curl);
+	}
+
+	return output == NULL ? strIn : out;
+}
+string QuickEscape(string strIn, CURL *curlIn) {
+	return QuickEscape(strIn.c_str(), curlIn);
+}
+
+
+string* ReplaceInString(string &in, const string &search, const string &replace) {
+	std::string::size_type n = 0;
+
+	while ((n = in.find(search, n)) != std::string::npos)
+	{
+		in.replace(n, search.size(), replace);
+		n += replace.size();
+	}
+
+	return &in;
+}
+
 
 void GetParts(c_str file, FileParts& parts)
 {
