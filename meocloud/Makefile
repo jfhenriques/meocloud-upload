@@ -1,7 +1,7 @@
 CC      = g++
 INCLUDE = -I../include
 CXXFLAGS= $(INCLUDE) -std=c++0x -O3 -W -Wall -Wextra -march=native
-LDFLAGS = -lcurl
+LDFLAGS = -lcurl -static
 
 TARGET=meocloud
 SOURCES=Http.cpp Meocloud_API.cpp Utils.cpp main.cpp
