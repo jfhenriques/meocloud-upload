@@ -22,7 +22,7 @@ namespace Meocloud {
 	const string API::OAUTH2_AUTH = API::OAUTH2_BASE + "authorize";
 	const string API::OAUTH2_TOKEN = API::OAUTH2_BASE + "token";
 
-	const string API::URL_BASE_PUBLIC = "https://publicapi.meocloud.pt/1/";
+	const string API::URL_BASE_PUBLIC = "https://api.meocloud.pt/1/";
 	const string API::URL_BASE_CONTENT = "https://api-content.meocloud.pt/1/";
 
 
